@@ -1,20 +1,27 @@
 import axios from "axios";
-import jQuery from "jquery";
+import jQuery, { HTMLElement } from "jquery";
 
 const $ = jQuery;
 
-const $showsList = $("#showsList");
-const $episodesArea = $("#episodesArea");
-const $searchForm = $("#searchForm");
+const $showsList = $("#showsList") as HTMLElement;
+const $episodesArea = $("#episodesArea") as HTMLElement;
+const $searchForm = $("#searchForm") as HTMLElement;
 
 const DEFAULT_IMAGE_URL: string = "https://tinyurl.com/tv-missing";
-const BASE_API: string = "http://api.tvmaze.com/";
+const BASE_API: string = "https://api.tvmaze.com/";
 
 interface ShowInterface {
   id: number;
   name: string;
   summary: string;
   image: string;
+}
+
+interface EpisodeInterface {
+  id: number;
+  name: string;
+  season: number;
+  number: number;
 }
 
 /** Given a search term, search for tv shows that match that query.
@@ -66,6 +73,8 @@ function populateShows(shows: ShowInterface[]): void {
       `
     );
 
+
+    $(".Show-getEpisodes").data("id", show.id);
     $showsList.append($show);
   }
 }
@@ -87,12 +96,49 @@ $searchForm.on("submit", async function (evt) {
   await searchForShowAndDisplay();
 });
 
+$showsList.on("click", ".Show-getEpisodes", async function (evt) {
+  evt.preventDefault();
+  const id: number = $(evt.target).data("id");
+  const episodes: EpisodeInterface[] = await getEpisodesOfShow(id);
+
+  $episodesArea.show();
+  populateEpisodes(episodes);
+});
+
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
  */
 
-// async function getEpisodesOfShow(id) { }
+async function getEpisodesOfShow(id: number): Promise<EpisodeInterface[]> {
+  const response = await axios.get(`${BASE_API}shows/1/episodes`);
+  console.log("episodes list: ", response.data);
 
-/** Write a clear docstring for this function... */
+  const episodes: EpisodeInterface[] = response.data.map((epi) => {
+    return {
+      id: epi.id,
+      name: epi.name,
+      season: epi.season,
+      number: epi.number,
+    };
+  });
 
-// function populateEpisodes(episodes) { }
+  return episodes;
+}
+
+/** Creates markup for each episode and appends HTML to DOM.
+ *
+ * Accepts a list of episodes:
+ *    [{ id, name, season, number}, ...]
+*/
+
+function populateEpisodes(episodes: EpisodeInterface[]): void {
+  $episodesArea.empty();
+
+  for (let epi of episodes) {
+    const $epi = $(
+      `<li>${epi.name} (Season ${epi.season}, Episode ${epi.number})</li>`
+    );
+
+    $episodesArea.append($epi);
+  }
+}
