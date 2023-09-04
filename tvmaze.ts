@@ -73,7 +73,6 @@ function populateShows(shows: ShowInterface[]): void {
       `
     );
 
-
     $(".Show-getEpisodes").data("id", show.id);
     $showsList.append($show);
   }
@@ -129,7 +128,7 @@ async function getEpisodesOfShow(id: number): Promise<EpisodeInterface[]> {
  *
  * Accepts a list of episodes:
  *    [{ id, name, season, number}, ...]
-*/
+ */
 
 function populateEpisodes(episodes: EpisodeInterface[]): void {
   $episodesArea.empty();
